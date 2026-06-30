@@ -6,7 +6,12 @@ import type { FoodLog, MealType } from "@/types/food";
 import type { DailyNote } from "@/types/note";
 import type { BodyWeight, CaloriePoint, WeekSummary } from "@/types/progress";
 import type { UserGoals } from "@/types/user";
-import type { ExerciseSet, WorkoutExercise, WorkoutSession } from "@/types/workout";
+import type {
+  ExerciseSet,
+  WorkoutExercise,
+  WorkoutSession,
+  WorkoutSummary,
+} from "@/types/workout";
 
 const DEFAULT_GOALS: UserGoals = {
   calorieGoal: 2200,
@@ -198,32 +203,29 @@ export async function getOrCreateActiveSession(
   return id;
 }
 
-export async function getCurrentWorkout(
-  db: SQLiteDatabase,
-): Promise<WorkoutSession | null> {
-  const session = await db.getFirstAsync<{
-    id: string;
-    name: string;
-    muscle_group: string | null;
-    started_at: string;
-    finished_at: string | null;
-    notes: string | null;
-  }>(
-    `SELECT id, name, muscle_group, started_at, finished_at, notes
-       FROM workout_sessions
-      WHERE user_id = ? AND finished_at IS NULL
-      ORDER BY started_at DESC LIMIT 1`,
-    [LOCAL_USER_ID],
-  );
-  if (!session) return null;
+interface SessionRow {
+  id: string;
+  name: string;
+  muscle_group: string | null;
+  started_at: string;
+  finished_at: string | null;
+  notes: string | null;
+}
 
+/** Loads a session's exercises + sets into a full WorkoutSession. */
+async function hydrateSession(
+  db: SQLiteDatabase,
+  session: SessionRow,
+): Promise<WorkoutSession> {
   const exerciseRows = await db.getAllAsync<{
     id: string;
     name: string;
     muscle_group: string | null;
     order_index: number;
+    started_at: string | null;
+    ended_at: string | null;
   }>(
-    `SELECT id, name, muscle_group, order_index
+    `SELECT id, name, muscle_group, order_index, started_at, ended_at
        FROM workout_exercises WHERE session_id = ? ORDER BY order_index ASC`,
     [session.id],
   );
@@ -241,19 +243,30 @@ export async function getCurrentWorkout(
          FROM exercise_sets WHERE exercise_id = ? ORDER BY set_number ASC`,
       [ex.id],
     );
-    const sets: ExerciseSet[] = setRows.map((s) => ({
-      id: s.id,
-      setNumber: s.set_number,
-      weightKg: s.weight_kg,
-      reps: s.reps,
-      completed: s.completed === 1,
-    }));
+    const durationSec =
+      ex.started_at && ex.ended_at
+        ? Math.max(
+            0,
+            Math.floor(
+              (Date.parse(ex.ended_at) - Date.parse(ex.started_at)) / 1000,
+            ),
+          )
+        : undefined;
     exercises.push({
       id: ex.id,
       name: ex.name,
       muscleGroup: ex.muscle_group ?? "",
       orderIndex: ex.order_index,
-      sets,
+      startedAt: ex.started_at ?? undefined,
+      endedAt: ex.ended_at ?? undefined,
+      durationSec,
+      sets: setRows.map((s) => ({
+        id: s.id,
+        setNumber: s.set_number,
+        weightKg: s.weight_kg,
+        reps: s.reps,
+        completed: s.completed === 1,
+      })),
     });
   }
 
@@ -266,6 +279,68 @@ export async function getCurrentWorkout(
     notes: session.notes ?? undefined,
     exercises,
   };
+}
+
+const SESSION_COLS =
+  "id, name, muscle_group, started_at, finished_at, notes";
+
+/** The most recent session (active or finished). */
+export async function getCurrentWorkout(
+  db: SQLiteDatabase,
+): Promise<WorkoutSession | null> {
+  const session = await db.getFirstAsync<SessionRow>(
+    `SELECT ${SESSION_COLS} FROM workout_sessions
+      WHERE user_id = ? ORDER BY started_at DESC LIMIT 1`,
+    [LOCAL_USER_ID],
+  );
+  return session ? hydrateSession(db, session) : null;
+}
+
+export async function getWorkoutById(
+  db: SQLiteDatabase,
+  id: string,
+): Promise<WorkoutSession | null> {
+  const session = await db.getFirstAsync<SessionRow>(
+    `SELECT ${SESSION_COLS} FROM workout_sessions WHERE id = ? LIMIT 1`,
+    [id],
+  );
+  return session ? hydrateSession(db, session) : null;
+}
+
+/** Finished sessions, newest first, with aggregate stats for the history list. */
+export async function getWorkoutHistory(
+  db: SQLiteDatabase,
+): Promise<WorkoutSummary[]> {
+  const rows = await db.getAllAsync<{
+    id: string;
+    name: string;
+    started_at: string;
+    finished_at: string | null;
+    exercise_count: number;
+    set_count: number;
+    completed_sets: number;
+    volume: number;
+  }>(
+    `SELECT ws.id, ws.name, ws.started_at, ws.finished_at,
+       (SELECT COUNT(*) FROM workout_exercises we WHERE we.session_id = ws.id) AS exercise_count,
+       (SELECT COUNT(*) FROM exercise_sets es JOIN workout_exercises we ON we.id = es.exercise_id WHERE we.session_id = ws.id) AS set_count,
+       (SELECT COUNT(*) FROM exercise_sets es JOIN workout_exercises we ON we.id = es.exercise_id WHERE we.session_id = ws.id AND es.completed = 1) AS completed_sets,
+       (SELECT COALESCE(SUM(es.weight_kg * es.reps), 0) FROM exercise_sets es JOIN workout_exercises we ON we.id = es.exercise_id WHERE we.session_id = ws.id AND es.completed = 1) AS volume
+     FROM workout_sessions ws
+     WHERE ws.user_id = ? AND ws.finished_at IS NOT NULL
+     ORDER BY ws.started_at DESC`,
+    [LOCAL_USER_ID],
+  );
+  return rows.map((r) => ({
+    id: r.id,
+    name: r.name,
+    startedAt: r.started_at,
+    finishedAt: r.finished_at ?? undefined,
+    exerciseCount: r.exercise_count,
+    setCount: r.set_count,
+    completedSets: r.completed_sets,
+    volumeKg: r.volume,
+  }));
 }
 
 export async function toggleSet(
@@ -294,6 +369,13 @@ export async function addExercise(
   input: NewExercise,
 ): Promise<void> {
   const now = new Date().toISOString();
+  // Passively close out the previous exercise so its duration is captured
+  // when the user advances to the next one.
+  await db.runAsync(
+    `UPDATE workout_exercises SET ended_at = ?, updated_at = ?, synced = 0
+      WHERE session_id = ? AND ended_at IS NULL`,
+    [now, now, sessionId],
+  );
   const count = await db.getFirstAsync<{ c: number }>(
     `SELECT COUNT(*) as c FROM workout_exercises WHERE session_id = ?`,
     [sessionId],
@@ -302,9 +384,9 @@ export async function addExercise(
   const exId = generateId("ex");
   await db.runAsync(
     `INSERT INTO workout_exercises
-       (id, session_id, name, muscle_group, order_index, updated_at, synced)
-     VALUES (?, ?, ?, ?, ?, ?, 0)`,
-    [exId, sessionId, input.name, input.muscleGroup ?? "", orderIndex, now],
+       (id, session_id, name, muscle_group, order_index, started_at, ended_at, updated_at, synced)
+     VALUES (?, ?, ?, ?, ?, ?, NULL, ?, 0)`,
+    [exId, sessionId, input.name, input.muscleGroup ?? "", orderIndex, now, now],
   );
 
   const sets = input.sets?.length ? input.sets : [{ weightKg: 0, reps: 0 }];
@@ -385,6 +467,12 @@ export async function finishWorkout(
   sessionId: string,
 ): Promise<void> {
   const now = new Date().toISOString();
+  // Close the final exercise so its duration is recorded too.
+  await db.runAsync(
+    `UPDATE workout_exercises SET ended_at = ?, updated_at = ?, synced = 0
+      WHERE session_id = ? AND ended_at IS NULL`,
+    [now, now, sessionId],
+  );
   await db.runAsync(
     `UPDATE workout_sessions SET finished_at = ?, updated_at = ?, synced = 0 WHERE id = ?`,
     [now, now, sessionId],

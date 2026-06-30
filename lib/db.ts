@@ -12,7 +12,22 @@ import type { SQLiteDatabase } from "expo-sqlite";
  * for future destructive/data migrations.
  */
 export const DB_NAME = "fitnotes.db";
-const DB_VERSION = 3;
+const DB_VERSION = 4;
+
+/** Adds a column to a table only if it isn't already present (idempotent). */
+async function addColumnIfMissing(
+  db: SQLiteDatabase,
+  table: string,
+  column: string,
+  definition: string,
+): Promise<void> {
+  const cols = await db.getAllAsync<{ name: string }>(
+    `PRAGMA table_info(${table})`,
+  );
+  if (!cols.some((c) => c.name === column)) {
+    await db.execAsync(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`);
+  }
+}
 
 export async function migrateDbIfNeeded(db: SQLiteDatabase): Promise<void> {
   // Ensure the full schema exists. Idempotent and cheap; runs every launch.
@@ -133,6 +148,12 @@ export async function migrateDbIfNeeded(db: SQLiteDatabase): Promise<void> {
         updated_at TEXT NOT NULL
       );
   `);
+
+  // v4: passive per-exercise duration tracking (local-only for now — these
+  // columns are intentionally absent from the sync layer until the cloud
+  // schema gains matching columns).
+  await addColumnIfMissing(db, "workout_exercises", "started_at", "TEXT");
+  await addColumnIfMissing(db, "workout_exercises", "ended_at", "TEXT");
 
   await db.execAsync(`PRAGMA user_version = ${DB_VERSION}`);
 }

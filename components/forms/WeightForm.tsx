@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { Alert } from "react-native";
 
+import { useDialog } from "@/context/DialogContext";
 import { FormModal } from "@/components/forms/FormModal";
 import { FormField } from "@/components/ui/FormField";
 
@@ -18,6 +18,7 @@ export function WeightForm({
   onSubmit,
   defaultValue,
 }: WeightFormProps) {
+  const { alert } = useDialog();
   const [weight, setWeight] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
@@ -29,7 +30,10 @@ export function WeightForm({
   const handleSubmit = async () => {
     const n = parseFloat(weight);
     if (!Number.isFinite(n) || n <= 0) {
-      Alert.alert("Enter a weight", "Please enter a valid weight in kg.");
+      await alert({
+        title: "Enter a weight",
+        message: "Please enter a valid weight in kg.",
+      });
       return;
     }
     setSubmitting(true);

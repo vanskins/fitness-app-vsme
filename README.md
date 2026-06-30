@@ -28,6 +28,7 @@ npm run typecheck  # tsc --noEmit
 | **Local-first data layer** — `expo-sqlite`, migrations, seed, hooks | ✅ |
 | **Meal CRUD** — Food screen list/add/edit/delete (FAB + Add meal) | ✅ |
 | **Exercise/set CRUD** — add exercise, add/edit/delete set, delete exercise, toggle | ✅ |
+| **Workout history** — past sessions list + detail with AI summary (`app/history.tsx`, `app/workout/[id].tsx`) | ✅ |
 | **Note CRUD** — Profile journal add/edit/delete | ✅ |
 | **Progress** — weight trend (line), calorie history (bars), weekly summary, log weight | ✅ |
 | **Onboarding + local auth** — walkthrough, sign up, login, logout, route gating | ✅ |

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import { Alert, View } from "react-native";
+import { View } from "react-native";
 
+import { useDialog } from "@/context/DialogContext";
 import { FormModal } from "@/components/forms/FormModal";
 import { Chips } from "@/components/ui/Chips";
 import { FormField } from "@/components/ui/FormField";
@@ -28,6 +29,7 @@ const toNum = (s: string) => {
 };
 
 export function MealForm({ visible, onClose, onSubmit, initial }: MealFormProps) {
+  const { alert } = useDialog();
   const [mealType, setMealType] = useState<MealType>("breakfast");
   const [foodName, setFoodName] = useState("");
   const [detail, setDetail] = useState("");
@@ -51,7 +53,7 @@ export function MealForm({ visible, onClose, onSubmit, initial }: MealFormProps)
 
   const handleSubmit = async () => {
     if (!foodName.trim()) {
-      Alert.alert("Add a name", "Please enter a food name.");
+      await alert({ title: "Add a name", message: "Please enter a food name." });
       return;
     }
     setSubmitting(true);

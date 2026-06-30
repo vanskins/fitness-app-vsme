@@ -1,7 +1,9 @@
 import { Pressable, Text, View } from "react-native";
 
 import { Card } from "@/components/ui/Card";
+import { Icon } from "@/components/ui/Icon";
 import { SetRow } from "@/components/ui/SetRow";
+import { colors } from "@/constants/colors";
 import type { ExerciseSet, WorkoutExercise } from "@/types/workout";
 
 interface ExerciseCardProps {
@@ -52,7 +54,7 @@ export function ExerciseCard({
             hitSlop={8}
             className="h-9 w-9 items-center justify-center rounded-pill active:opacity-60"
           >
-            <Text className="text-base text-muted">🗑️</Text>
+            <Icon name="trash" size={18} color={colors.faint} />
           </Pressable>
         ) : (
           <View className="flex-row items-center">
@@ -61,7 +63,7 @@ export function ExerciseCard({
             </Text>
             {allDone ? (
               <View className="ml-2 h-6 w-6 items-center justify-center rounded-pill bg-primary">
-                <Text className="text-xs font-medium text-white">✓</Text>
+                <Icon name="check" size={13} color="#FFFFFF" />
               </View>
             ) : null}
           </View>

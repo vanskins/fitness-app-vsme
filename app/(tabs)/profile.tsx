@@ -1,10 +1,14 @@
 import { useState } from "react";
-import { Alert, Pressable, ScrollView, Text, View } from "react-native";
+import { Pressable, ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { useDialog } from "@/context/DialogContext";
 import { NoteForm } from "@/components/forms/NoteForm";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { Gradient } from "@/components/ui/Gradient";
+import { Icon } from "@/components/ui/Icon";
+import { colors } from "@/constants/colors";
 import { useAuth } from "@/context/AuthContext";
 import { useNotes } from "@/hooks/useNotes";
 import type { NewNote } from "@/lib/repository";
@@ -22,16 +26,21 @@ function formatDate(iso: string): string {
 
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
+  const { confirm } = useDialog();
   const { profile, signOut } = useAuth();
   const { notes, add, update, remove } = useNotes();
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<DailyNote | null>(null);
 
-  const confirmLogout = () => {
-    Alert.alert("Log out?", "You can log back in anytime.", [
-      { text: "Cancel", style: "cancel" },
-      { text: "Log out", style: "destructive", onPress: () => signOut() },
-    ]);
+  const confirmLogout = async () => {
+    const ok = await confirm({
+      title: "Log out?",
+      message: "You can log back in anytime.",
+      confirmLabel: "Log out",
+      destructive: true,
+      icon: "logout",
+    });
+    if (ok) signOut();
   };
 
   const openCreate = () => {
@@ -44,11 +53,15 @@ export default function ProfileScreen() {
     setFormOpen(true);
   };
 
-  const confirmDelete = (note: DailyNote) => {
-    Alert.alert("Delete note?", note.content, [
-      { text: "Cancel", style: "cancel" },
-      { text: "Delete", style: "destructive", onPress: () => remove(note.id) },
-    ]);
+  const confirmDelete = async (note: DailyNote) => {
+    const ok = await confirm({
+      title: "Delete note?",
+      message: note.content,
+      confirmLabel: "Delete",
+      destructive: true,
+      icon: "trash",
+    });
+    if (ok) remove(note.id);
   };
 
   const handleSubmit = async (input: NewNote) => {
@@ -68,11 +81,13 @@ export default function ProfileScreen() {
       >
         {/* Profile header */}
         <View className="flex-row items-center">
-          <View className="h-14 w-14 items-center justify-center rounded-pill bg-primary">
-            <Text className="text-lg font-medium text-white">
-              {profile?.initials ?? "?"}
-            </Text>
-          </View>
+          <Gradient radius={99} style={{ width: 56, height: 56 }}>
+            <View className="flex-1 items-center justify-center">
+              <Text className="text-lg font-medium text-white">
+                {profile?.initials ?? "?"}
+              </Text>
+            </View>
+          </Gradient>
           <View className="ml-3 flex-1">
             <Text className="text-2xl font-medium text-ink">
               {profile?.name ?? "FitNotes member"}
@@ -108,16 +123,22 @@ export default function ProfileScreen() {
                     <Text className="mt-1 text-base text-ink">
                       {note.content}
                     </Text>
-                    <View className="mt-1 flex-row gap-3">
+                    <View className="mt-1.5 flex-row gap-4">
                       {note.energyLevel ? (
-                        <Text className="text-xs text-muted">
-                          ⚡ Energy {note.energyLevel}/5
-                        </Text>
+                        <View className="flex-row items-center">
+                          <Icon name="energy" size={13} color={colors.accent.amber.icon} />
+                          <Text className="ml-1 text-xs text-muted">
+                            Energy {note.energyLevel}/5
+                          </Text>
+                        </View>
                       ) : null}
                       {note.sleepHours != null ? (
-                        <Text className="text-xs text-muted">
-                          😴 {note.sleepHours} hrs
-                        </Text>
+                        <View className="flex-row items-center">
+                          <Icon name="sleep" size={13} color={colors.accent.violet.icon} />
+                          <Text className="ml-1 text-xs text-muted">
+                            {note.sleepHours} hrs
+                          </Text>
+                        </View>
                       ) : null}
                     </View>
                   </Pressable>
@@ -128,7 +149,7 @@ export default function ProfileScreen() {
                     hitSlop={8}
                     className="ml-2 h-9 w-9 items-center justify-center rounded-pill active:opacity-60"
                   >
-                    <Text className="text-lg text-muted">🗑️</Text>
+                    <Icon name="trash" size={18} color={colors.faint} />
                   </Pressable>
                 </View>
               </Card>
@@ -137,7 +158,7 @@ export default function ProfileScreen() {
         </View>
 
         <View className="mt-4">
-          <Button label="Add note" icon="+" fullWidth onPress={openCreate} />
+          <Button label="Add note" icon="add" fullWidth onPress={openCreate} />
         </View>
 
         <View className="mt-8 items-center">

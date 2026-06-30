@@ -1,7 +1,6 @@
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import {
-  Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -12,12 +11,16 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Button } from "@/components/ui/Button";
 import { FormField } from "@/components/ui/FormField";
+import { Gradient } from "@/components/ui/Gradient";
+import { Icon } from "@/components/ui/Icon";
 import { useAuth } from "@/context/AuthContext";
+import { useDialog } from "@/context/DialogContext";
 
 export default function LoginScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { signIn } = useAuth();
+  const { alert } = useDialog();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -25,23 +28,25 @@ export default function LoginScreen() {
 
   const handleSubmit = async () => {
     if (!email.includes("@") || !password) {
-      return Alert.alert("Sign in", "Enter your email and password.");
+      await alert({ title: "Sign in", message: "Enter your email and password." });
+      return;
     }
     setSubmitting(true);
     try {
       const ok = await signIn(email, password);
       if (!ok) {
-        Alert.alert(
-          "Couldn't sign in",
-          "That email and password don't match. Try again or create an account.",
-        );
+        await alert({
+          title: "Couldn't sign in",
+          message:
+            "That email and password don't match. Try again or create an account.",
+        });
       }
       // On success, route gating redirects into the app.
     } catch (e) {
-      Alert.alert(
-        "Sign in failed",
-        e instanceof Error ? e.message : "Please try again.",
-      );
+      await alert({
+        title: "Sign in failed",
+        message: e instanceof Error ? e.message : "Please try again.",
+      });
     } finally {
       setSubmitting(false);
     }
@@ -62,9 +67,11 @@ export default function LoginScreen() {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <View className="mt-6 h-16 w-16 items-center justify-center rounded-full bg-primary">
-          <Text className="text-2xl">🏋️</Text>
-        </View>
+        <Gradient radius={99} style={{ width: 64, height: 64, marginTop: 24 }}>
+          <View className="flex-1 items-center justify-center">
+            <Icon name="dumbbell" size={30} color="#FFFFFF" />
+          </View>
+        </Gradient>
         <Text className="mt-6 text-3xl font-medium text-ink">Welcome back 👋</Text>
         <Text className="mt-2 text-base text-muted">
           Let's pick up right where you left off.

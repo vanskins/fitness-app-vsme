@@ -1,23 +1,27 @@
 import { useState } from "react";
-import { Alert, Pressable, ScrollView, Text, View } from "react-native";
+import { Pressable, ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { useDialog } from "@/context/DialogContext";
 import { MealForm } from "@/components/forms/MealForm";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { Icon, type IconName } from "@/components/ui/Icon";
+import { colors, type AccentName } from "@/constants/colors";
 import { useFoodLog } from "@/hooks/useFoodLog";
 import type { NewFoodLog } from "@/lib/repository";
 import type { FoodLog, MealType } from "@/types/food";
 
-const MEAL_ICON: Record<MealType, string> = {
-  breakfast: "🍳",
-  lunch: "🥗",
-  dinner: "🍽️",
-  snack: "🍎",
+const MEAL: Record<MealType, { icon: IconName; accent: AccentName }> = {
+  breakfast: { icon: "breakfast", accent: "amber" },
+  lunch: { icon: "lunch", accent: "green" },
+  dinner: { icon: "dinner", accent: "coral" },
+  snack: { icon: "snack", accent: "violet" },
 };
 
 export default function FoodScreen() {
   const insets = useSafeAreaInsets();
+  const { confirm } = useDialog();
   const { meals, addMeal, updateMeal, deleteMeal } = useFoodLog();
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<FoodLog | null>(null);
@@ -34,11 +38,15 @@ export default function FoodScreen() {
     setFormOpen(true);
   };
 
-  const confirmDelete = (meal: FoodLog) => {
-    Alert.alert("Delete meal?", meal.foodName, [
-      { text: "Cancel", style: "cancel" },
-      { text: "Delete", style: "destructive", onPress: () => deleteMeal(meal.id) },
-    ]);
+  const confirmDelete = async (meal: FoodLog) => {
+    const ok = await confirm({
+      title: "Delete meal?",
+      message: meal.foodName,
+      confirmLabel: "Delete",
+      destructive: true,
+      icon: "trash",
+    });
+    if (ok) deleteMeal(meal.id);
   };
 
   const handleSubmit = async (input: NewFoodLog) => {
@@ -80,8 +88,15 @@ export default function FoodScreen() {
                     accessibilityLabel={`Edit ${meal.foodName}`}
                     onPress={() => openEdit(meal)}
                   >
-                    <View className="h-11 w-11 items-center justify-center rounded-pill bg-background">
-                      <Text className="text-lg">{MEAL_ICON[meal.mealType]}</Text>
+                    <View
+                      style={{ backgroundColor: colors.accent[MEAL[meal.mealType].accent].bg }}
+                      className="h-11 w-11 items-center justify-center rounded-[14px]"
+                    >
+                      <Icon
+                        name={MEAL[meal.mealType].icon}
+                        size={20}
+                        color={colors.accent[MEAL[meal.mealType].accent].icon}
+                      />
                     </View>
                     <View className="ml-3 flex-1">
                       <Text className="text-xs capitalize text-muted">
@@ -102,7 +117,7 @@ export default function FoodScreen() {
                     hitSlop={8}
                     className="ml-2 h-9 w-9 items-center justify-center rounded-pill active:opacity-60"
                   >
-                    <Text className="text-lg text-muted">🗑️</Text>
+                    <Icon name="trash" size={18} color={colors.faint} />
                   </Pressable>
                 </View>
               </Card>
@@ -111,7 +126,7 @@ export default function FoodScreen() {
         </View>
 
         <View className="mt-4">
-          <Button label="Add meal" icon="+" fullWidth onPress={openCreate} />
+          <Button label="Add meal" icon="add" fullWidth onPress={openCreate} />
         </View>
       </ScrollView>
 

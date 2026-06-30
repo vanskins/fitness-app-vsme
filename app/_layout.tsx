@@ -9,6 +9,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { AuthProvider, useAuth } from "@/context/AuthContext";
+import { DialogProvider } from "@/context/DialogContext";
 import { DB_NAME, migrateDbIfNeeded } from "@/lib/db";
 import { seedIfEmpty, seedWeightsIfEmpty } from "@/lib/seed";
 import { isSupabaseConfigured } from "@/lib/supabase";
@@ -70,7 +71,9 @@ export default function RootLayout() {
       <SafeAreaProvider>
         <SQLiteProvider databaseName={DB_NAME} onInit={initDb}>
           <AuthProvider>
-            <RootNavigator />
+            <DialogProvider>
+              <RootNavigator />
+            </DialogProvider>
           </AuthProvider>
         </SQLiteProvider>
       </SafeAreaProvider>

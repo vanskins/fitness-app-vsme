@@ -115,7 +115,7 @@ export default function ProgressScreen() {
           <View className="mt-3">
             <Button
               label="Log weight"
-              icon="+"
+              icon="add"
               fullWidth
               onPress={() => setWeightFormOpen(true)}
             />

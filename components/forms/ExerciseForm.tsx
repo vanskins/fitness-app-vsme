@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import { Alert, View } from "react-native";
+import { View } from "react-native";
 
+import { useDialog } from "@/context/DialogContext";
 import { FormModal } from "@/components/forms/FormModal";
 import { FormField } from "@/components/ui/FormField";
 import type { NewExercise } from "@/lib/repository";
@@ -22,6 +23,7 @@ const toInt = (s: string, fallback: number) => {
 };
 
 export function ExerciseForm({ visible, onClose, onSubmit }: ExerciseFormProps) {
+  const { alert } = useDialog();
   const [name, setName] = useState("");
   const [muscleGroup, setMuscleGroup] = useState("");
   const [weight, setWeight] = useState("");
@@ -40,7 +42,10 @@ export function ExerciseForm({ visible, onClose, onSubmit }: ExerciseFormProps) 
 
   const handleSubmit = async () => {
     if (!name.trim()) {
-      Alert.alert("Add a name", "Please enter an exercise name.");
+      await alert({
+        title: "Add a name",
+        message: "Please enter an exercise name.",
+      });
       return;
     }
     const count = toInt(setCount, 1);

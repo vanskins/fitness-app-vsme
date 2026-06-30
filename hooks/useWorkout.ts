@@ -46,6 +46,15 @@ export function useWorkout() {
     [db, reload],
   );
 
+  // Begin a fresh active workout (used after the last one was finished).
+  const startWorkout = useCallback(
+    async (name = "Workout") => {
+      await getOrCreateActiveSession(db, name);
+      await reload();
+    },
+    [db, reload],
+  );
+
   const deleteExercise = useCallback(
     async (exerciseId: string) => {
       await deleteExerciseRepo(db, exerciseId);
@@ -97,6 +106,7 @@ export function useWorkout() {
     loading,
     toggleSet,
     addExercise,
+    startWorkout,
     deleteExercise,
     addSet,
     updateSet,

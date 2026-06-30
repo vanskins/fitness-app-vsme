@@ -1,5 +1,6 @@
 import { Pressable, Text, View } from "react-native";
 
+import { Icon } from "@/components/ui/Icon";
 import { MIN_TAP_TARGET } from "@/constants/spacing";
 import type { ExerciseSet } from "@/types/workout";
 
@@ -54,9 +55,7 @@ export function SetRow({ set, onToggle, onEdit, onDelete }: SetRowProps) {
               : "border-border bg-surface",
           ].join(" ")}
         >
-          {set.completed ? (
-            <Text className="text-xs font-medium text-white">✓</Text>
-          ) : null}
+          {set.completed ? <Icon name="check" size={15} color="#FFFFFF" /> : null}
         </View>
       </Pressable>
     </View>

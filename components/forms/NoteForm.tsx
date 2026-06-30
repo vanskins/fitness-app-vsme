@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { Alert } from "react-native";
 
+import { useDialog } from "@/context/DialogContext";
 import { FormModal } from "@/components/forms/FormModal";
 import { Chips } from "@/components/ui/Chips";
 import { FormField } from "@/components/ui/FormField";
@@ -28,6 +28,7 @@ const toNumOrUndef = (s: string) => {
 };
 
 export function NoteForm({ visible, onClose, onSubmit, initial }: NoteFormProps) {
+  const { alert } = useDialog();
   const [content, setContent] = useState("");
   const [energy, setEnergy] = useState("3");
   const [sleep, setSleep] = useState("");
@@ -42,7 +43,7 @@ export function NoteForm({ visible, onClose, onSubmit, initial }: NoteFormProps)
 
   const handleSubmit = async () => {
     if (!content.trim()) {
-      Alert.alert("Write something", "Please enter a note.");
+      await alert({ title: "Write something", message: "Please enter a note." });
       return;
     }
     setSubmitting(true);

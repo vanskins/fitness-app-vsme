@@ -12,33 +12,40 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Button } from "@/components/ui/Button";
+import { Icon, type IconName } from "@/components/ui/Icon";
+import { colors, type AccentName } from "@/constants/colors";
 
 const { width } = Dimensions.get("window");
 
 interface Slide {
-  icon: string;
+  icon: IconName;
+  accent: AccentName;
   title: string;
   body: string;
 }
 
 const SLIDES: Slide[] = [
   {
-    icon: "💪",
+    icon: "workout",
+    accent: "coral",
     title: "Every rep counts",
     body: "Log your workouts in seconds and watch your strength climb, session after session.",
   },
   {
-    icon: "🍎",
+    icon: "food",
+    accent: "green",
     title: "Fuel your goals",
     body: "Track calories and macros without the spreadsheet headache. Small choices, big results.",
   },
   {
-    icon: "📈",
+    icon: "progress",
+    accent: "blue",
     title: "See your progress",
     body: "Turn daily habits into visible momentum with simple, honest charts.",
   },
   {
-    icon: "✨",
+    icon: "sparkles",
+    accent: "violet",
     title: "Your AI coach",
     body: "Get smart, personal tips based on what you actually log. You've got this.",
   },
@@ -99,8 +106,11 @@ export default function OnboardingScreen() {
             style={{ width }}
             className="flex-1 items-center justify-center px-10"
           >
-            <View className="h-32 w-32 items-center justify-center rounded-full bg-ai-bg">
-              <Text style={{ fontSize: 64 }}>{slide.icon}</Text>
+            <View
+              style={{ backgroundColor: colors.accent[slide.accent].bg }}
+              className="h-32 w-32 items-center justify-center rounded-full"
+            >
+              <Icon name={slide.icon} size={56} color={colors.accent[slide.accent].icon} />
             </View>
             <Text className="mt-8 text-center text-2xl font-medium text-ink">
               {slide.title}

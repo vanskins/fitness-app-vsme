@@ -1,17 +1,21 @@
 import type { ReactNode } from "react";
-import { View } from "react-native";
+import { View, type ViewStyle } from "react-native";
+
+import { shadows } from "@/constants/shadows";
 
 interface CardProps {
   children: ReactNode;
   /** Extra utility classes appended to the base card style. */
   className?: string;
+  style?: ViewStyle | ViewStyle[];
 }
 
-/** Surface container with the 14px card radius and a hairline border. */
-export function Card({ children, className }: CardProps) {
+/** Surface container with the 16px card radius and soft elevation. */
+export function Card({ children, className, style }: CardProps) {
   return (
     <View
-      className={["rounded-card border border-border bg-surface p-4", className]
+      style={[shadows.card, ...(Array.isArray(style) ? style : style ? [style] : [])]}
+      className={["rounded-card bg-surface p-4", className]
         .filter(Boolean)
         .join(" ")}
     >

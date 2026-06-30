@@ -1,7 +1,6 @@
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import {
-  Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -13,11 +12,13 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Button } from "@/components/ui/Button";
 import { FormField } from "@/components/ui/FormField";
 import { useAuth } from "@/context/AuthContext";
+import { useDialog } from "@/context/DialogContext";
 
 export default function SetupScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { signUp } = useAuth();
+  const { alert, confirm } = useDialog();
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -26,11 +27,18 @@ export default function SetupScreen() {
   const [submitting, setSubmitting] = useState(false);
 
   const handleSubmit = async () => {
-    if (!name.trim()) return Alert.alert("Your name", "What should we call you?");
-    if (!email.includes("@"))
-      return Alert.alert("Email", "Please enter a valid email.");
-    if (password.length < 4)
-      return Alert.alert("Password", "Use at least 4 characters.");
+    if (!name.trim()) {
+      await alert({ title: "Your name", message: "What should we call you?" });
+      return;
+    }
+    if (!email.includes("@")) {
+      await alert({ title: "Email", message: "Please enter a valid email." });
+      return;
+    }
+    if (password.length < 4) {
+      await alert({ title: "Password", message: "Use at least 4 characters." });
+      return;
+    }
 
     setSubmitting(true);
     try {
@@ -41,18 +49,21 @@ export default function SetupScreen() {
         calorieGoal: parseInt(goal, 10) || undefined,
       });
       if (needsConfirmation) {
-        Alert.alert(
-          "Confirm your email",
-          "We sent you a confirmation link. Confirm it, then log in.",
-          [{ text: "OK", onPress: () => router.replace("/(auth)/login") }],
-        );
+        await confirm({
+          title: "Confirm your email",
+          message: "We sent you a confirmation link. Confirm it, then log in.",
+          confirmLabel: "OK",
+          confirmOnly: true,
+          icon: "user",
+        });
+        router.replace("/(auth)/login");
       }
       // Otherwise route gating redirects into the app once the session is set.
     } catch (e) {
-      Alert.alert(
-        "Couldn't create account",
-        e instanceof Error ? e.message : "Please try again.",
-      );
+      await alert({
+        title: "Couldn't create account",
+        message: e instanceof Error ? e.message : "Please try again.",
+      });
     } finally {
       setSubmitting(false);
     }

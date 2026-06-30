@@ -1,19 +1,17 @@
 import { Text, View } from "react-native";
 
+import { Icon, type IconName } from "@/components/ui/Icon";
+import { colors, type AccentName } from "@/constants/colors";
 import type { FoodLog, MealType } from "@/types/food";
 
-const MEAL_ICON: Record<MealType, string> = {
-  breakfast: "🍳",
-  lunch: "🥗",
-  dinner: "🍽️",
-  snack: "🍎",
-};
-
-const MEAL_LABEL: Record<MealType, string> = {
-  breakfast: "Breakfast",
-  lunch: "Lunch",
-  dinner: "Dinner",
-  snack: "Snack",
+const MEAL: Record<
+  MealType,
+  { icon: IconName; accent: AccentName; label: string }
+> = {
+  breakfast: { icon: "breakfast", accent: "amber", label: "Breakfast" },
+  lunch: { icon: "lunch", accent: "green", label: "Lunch" },
+  dinner: { icon: "dinner", accent: "coral", label: "Dinner" },
+  snack: { icon: "snack", accent: "violet", label: "Snack" },
 };
 
 interface MealRowProps {
@@ -21,23 +19,25 @@ interface MealRowProps {
 }
 
 export function MealRow({ meal }: MealRowProps) {
+  const m = MEAL[meal.mealType];
+  const a = colors.accent[m.accent];
   return (
     <View className="flex-row items-center py-3">
-      <View className="h-11 w-11 items-center justify-center rounded-pill bg-background">
-        <Text className="text-lg">{MEAL_ICON[meal.mealType]}</Text>
+      <View
+        style={{ backgroundColor: a.bg }}
+        className="h-10 w-10 items-center justify-center rounded-[12px]"
+      >
+        <Icon name={m.icon} size={18} color={a.icon} />
       </View>
       <View className="ml-3 flex-1">
-        <Text className="text-xs text-muted">{MEAL_LABEL[meal.mealType]}</Text>
         <Text className="text-base font-medium text-ink">{meal.foodName}</Text>
-        {meal.detail ? (
-          <Text className="text-sm text-muted" numberOfLines={1}>
-            {meal.detail}
-          </Text>
-        ) : null}
+        <Text className="text-xs text-faint" numberOfLines={1}>
+          {meal.detail ? `${m.label} · ${meal.detail}` : m.label}
+        </Text>
       </View>
       <Text className="ml-2 text-base font-medium text-ink">
-        {meal.calories}
-        <Text className="text-sm text-muted"> kcal</Text>
+        {Math.round(meal.calories)}
+        <Text className="text-xs text-faint"> kcal</Text>
       </Text>
     </View>
   );

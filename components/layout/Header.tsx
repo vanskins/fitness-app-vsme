@@ -1,5 +1,6 @@
 import { Pressable, Text, View } from "react-native";
 
+import { Gradient } from "@/components/ui/Gradient";
 import { MIN_TAP_TARGET } from "@/constants/spacing";
 
 interface HeaderProps {
@@ -11,7 +12,7 @@ interface HeaderProps {
   onAvatarPress?: () => void;
 }
 
-/** Greeting header with an initials avatar (Home dashboard). */
+/** Greeting header with a gradient initials avatar (Home dashboard). */
 export function Header({ greeting, name, initials, onAvatarPress }: HeaderProps) {
   return (
     <View className="flex-row items-center justify-between">
@@ -27,9 +28,11 @@ export function Header({ greeting, name, initials, onAvatarPress }: HeaderProps)
         style={{ minWidth: MIN_TAP_TARGET, minHeight: MIN_TAP_TARGET }}
         className="items-center justify-center active:opacity-70"
       >
-        <View className="h-11 w-11 items-center justify-center rounded-pill bg-primary">
-          <Text className="text-base font-medium text-white">{initials}</Text>
-        </View>
+        <Gradient radius={99} style={{ width: 44, height: 44 }}>
+          <View className="flex-1 items-center justify-center">
+            <Text className="text-base font-medium text-white">{initials}</Text>
+          </View>
+        </Gradient>
       </Pressable>
     </View>
   );

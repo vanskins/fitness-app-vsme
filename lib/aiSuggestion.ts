@@ -8,11 +8,17 @@ import { supabase } from "@/lib/supabase";
  * copy, so the AI is purely additive and never blocks the UI.
  */
 export interface SuggestInput {
-  context: "home" | "workout";
+  context: "home" | "workout" | "workout_summary";
   goals?: { calorieGoal?: number; proteinGoalG?: number };
   totals?: { calories?: number; proteinG?: number };
   meals?: Array<{ name?: string; calories?: number }>;
-  workout?: { name?: string; exercises?: Array<{ name?: string; topSetKg?: number }> };
+  workout?: {
+    name?: string;
+    durationSec?: number;
+    volumeKg?: number;
+    completedSets?: number;
+    exercises?: Array<{ name?: string; topSetKg?: number }>;
+  };
 }
 
 export async function fetchSuggestion(
