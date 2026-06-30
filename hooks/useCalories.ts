@@ -1,7 +1,8 @@
 import { useFocusEffect } from "expo-router";
 import { useSQLiteContext } from "expo-sqlite";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
+import { onDataReset } from "@/lib/dataEvents";
 import { getDailyStats, getFoodLogsForDate, getGoals } from "@/lib/repository";
 
 export interface CaloriesSummary {
@@ -66,6 +67,9 @@ export function useCalories() {
       reload();
     }, [reload]),
   );
+
+  // Refresh when the cache is reset/synced (e.g. account switch).
+  useEffect(() => onDataReset(reload), [reload]);
 
   return { summary, reload };
 }

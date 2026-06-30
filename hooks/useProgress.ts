@@ -1,7 +1,8 @@
 import { useFocusEffect } from "expo-router";
 import { useSQLiteContext } from "expo-sqlite";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
+import { onDataReset } from "@/lib/dataEvents";
 import {
   addWeight as addWeightRepo,
   deleteWeight as deleteWeightRepo,
@@ -57,6 +58,8 @@ export function useProgress() {
       reload();
     }, [reload]),
   );
+
+  useEffect(() => onDataReset(reload), [reload]);
 
   return { weights, calories, summary, addWeight, deleteWeight, reload };
 }

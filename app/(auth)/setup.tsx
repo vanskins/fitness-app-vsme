@@ -34,13 +34,25 @@ export default function SetupScreen() {
 
     setSubmitting(true);
     try {
-      await signUp({
+      const { needsConfirmation } = await signUp({
         name,
         email,
         password,
         calorieGoal: parseInt(goal, 10) || undefined,
       });
-      // Route gating redirects to the app once logged in.
+      if (needsConfirmation) {
+        Alert.alert(
+          "Confirm your email",
+          "We sent you a confirmation link. Confirm it, then log in.",
+          [{ text: "OK", onPress: () => router.replace("/(auth)/login") }],
+        );
+      }
+      // Otherwise route gating redirects into the app once the session is set.
+    } catch (e) {
+      Alert.alert(
+        "Couldn't create account",
+        e instanceof Error ? e.message : "Please try again.",
+      );
     } finally {
       setSubmitting(false);
     }
@@ -69,9 +81,9 @@ export default function SetupScreen() {
         </Text>
 
         <View className="mt-8">
-          <FormField label="Name" value={name} onChangeText={setName} placeholder="Alex Rivera" />
-          <FormField label="Email" value={email} onChangeText={setEmail} placeholder="you@example.com" keyboardType="default" />
-          <FormField label="Password" value={password} onChangeText={setPassword} placeholder="At least 4 characters" />
+          <FormField label="Name" value={name} onChangeText={setName} placeholder="Alex Rivera" autoCapitalize="words" autoComplete="name" />
+          <FormField label="Email" value={email} onChangeText={setEmail} placeholder="you@example.com" keyboardType="email-address" autoCapitalize="none" autoComplete="email" textContentType="emailAddress" />
+          <FormField label="Password" value={password} onChangeText={setPassword} placeholder="At least 4 characters" secureTextEntry autoComplete="new-password" textContentType="newPassword" />
           <FormField label="Daily calorie goal" value={goal} onChangeText={setGoal} keyboardType="numeric" unit="kcal" />
         </View>
 

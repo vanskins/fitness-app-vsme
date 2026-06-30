@@ -51,6 +51,51 @@ No backend yet, so authentication is **on-device** (a `profile` table with a
 are stored plainly for this offline placeholder — **do not ship as-is**; Supabase
 Auth handles real hashing/tokens.
 
+## Supabase backend
+
+Supabase is the chosen cloud (Postgres + Auth + RLS). The integration is built
+**env-gated**: with no credentials the app stays fully local; adding keys turns
+on cloud sync. Two increments:
+
+**Increment 1 — scaffolded (done):**
+- `supabase/schema.sql` — full schema + Row-Level Security + signup trigger. Run it in the Supabase SQL editor.
+- `lib/supabase.ts` — client; `isSupabaseConfigured` is false until env keys exist.
+- `lib/sync.ts` — bidirectional push/pull (`synced=0` → cloud; newer `updated_at` → local). No-ops until configured.
+
+**Increment 2 — done & verified live:** `AuthContext` now uses **Supabase Auth**
+(session persisted via `expo-sqlite/kv-store` — no extra native module). On login
+`syncAll` pushes local rows to the cloud under the auth uid; RLS keeps each user
+to their own data. Verified: signup → session → all 8 tables synced to Postgres.
+
+> Dev note: turn **off** email confirmation (Auth → Email provider) for simulator
+> testing, or signups require an email link. The app handles both paths.
+>
+> Per-account isolation: demo seeding is gated off when Supabase is configured,
+> and the local cache is wiped on login when the account differs from the one it
+> last held (`lib/localData.ts` owner tracking). Screens refresh via a small
+> data-reset event (`lib/dataEvents.ts`) so a switch shows clean data immediately.
+
+**Setup:**
+1. Create a project at supabase.com → SQL editor → paste & run `supabase/schema.sql`.
+2. `cp .env.example .env` and fill `EXPO_PUBLIC_SUPABASE_URL` + `EXPO_PUBLIC_SUPABASE_ANON_KEY` (Settings → API; anon key only — never the service_role key).
+3. Restart Metro so the env vars inline.
+
+## AI suggestions (Edge Function)
+
+The "AI Tip" cards call Claude **server-side** via `supabase/functions/suggest`
+so the Anthropic key never ships in the app. It's auth-gated, caps input/output,
+and treats logged data as data (prompt-injection resistant). The app falls back
+to static copy when the function isn't deployed — purely additive.
+
+Deploy (needs the Supabase CLI: `brew install supabase/tap/supabase`, then `supabase login` + `supabase link`):
+1. Set the secret (server-side, never in the app): `supabase secrets set ANTHROPIC_API_KEY=sk-ant-...`
+2. Deploy: `supabase functions deploy suggest`
+
+Model defaults to `claude-opus-4-8` (the `MODEL` const in the function) — change
+to `claude-haiku-4-5` for cheaper high-volume tips. The app side
+(`lib/aiSuggestion.ts`, `hooks/useAISuggestion.ts`) needs no changes; it lights
+up automatically once the function is live.
+
 ## Data layer (local-first)
 
 On-device `expo-sqlite`, structured so a Supabase sync layer drops in later:

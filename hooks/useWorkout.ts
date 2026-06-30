@@ -1,7 +1,8 @@
 import { useFocusEffect } from "expo-router";
 import { useSQLiteContext } from "expo-sqlite";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
+import { onDataReset } from "@/lib/dataEvents";
 import {
   addExercise as addExerciseRepo,
   addSet as addSetRepo,
@@ -88,6 +89,8 @@ export function useWorkout() {
       reload();
     }, [reload]),
   );
+
+  useEffect(() => onDataReset(reload), [reload]);
 
   return {
     workout,

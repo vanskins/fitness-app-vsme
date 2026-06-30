@@ -9,6 +9,7 @@ import { MealRow } from "@/components/ui/MealRow";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { StatGrid, type Stat } from "@/components/ui/StatGrid";
 import { useAuth } from "@/context/AuthContext";
+import { useAISuggestion } from "@/hooks/useAISuggestion";
 import { useCalories } from "@/hooks/useCalories";
 import { useFoodLog } from "@/hooks/useFoodLog";
 import { mockAiSuggestions } from "@/lib/mockData";
@@ -35,6 +36,18 @@ export default function HomeScreen() {
     { label: "Steps", value: summary.steps.toLocaleString() },
     { label: "Active", value: `${summary.activeMinutes}`, unit: "min" },
   ];
+
+  // AI tip from the Edge Function; falls back to static copy until it responds.
+  const { tip: aiTip } = useAISuggestion(
+    {
+      context: "home",
+      goals: { calorieGoal: summary.goal, proteinGoalG: summary.proteinGoalG },
+      totals: { calories: summary.consumed, proteinG: summary.proteinG },
+      meals: meals.map((m) => ({ name: m.foodName, calories: m.calories })),
+    },
+    mockAiSuggestions.home,
+    `home:${Math.round(summary.consumed)}:${Math.round(summary.proteinG)}:${meals.length}`,
+  );
 
   return (
     <ScrollView
@@ -109,7 +122,7 @@ export default function HomeScreen() {
 
       {/* AI suggestion */}
       <View className="mt-5">
-        <AISuggestionCard tip={mockAiSuggestions.home} />
+        <AISuggestionCard tip={aiTip} />
       </View>
     </ScrollView>
   );

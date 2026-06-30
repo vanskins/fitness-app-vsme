@@ -37,6 +37,11 @@ export default function LoginScreen() {
         );
       }
       // On success, route gating redirects into the app.
+    } catch (e) {
+      Alert.alert(
+        "Sign in failed",
+        e instanceof Error ? e.message : "Please try again.",
+      );
     } finally {
       setSubmitting(false);
     }
@@ -66,8 +71,8 @@ export default function LoginScreen() {
         </Text>
 
         <View className="mt-8">
-          <FormField label="Email" value={email} onChangeText={setEmail} placeholder="you@example.com" />
-          <FormField label="Password" value={password} onChangeText={setPassword} placeholder="Your password" />
+          <FormField label="Email" value={email} onChangeText={setEmail} placeholder="you@example.com" keyboardType="email-address" autoCapitalize="none" autoComplete="email" textContentType="emailAddress" />
+          <FormField label="Password" value={password} onChangeText={setPassword} placeholder="Your password" secureTextEntry autoComplete="current-password" textContentType="password" />
         </View>
 
         <View className="mt-4">

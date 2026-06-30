@@ -11,11 +11,16 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
 import { DB_NAME, migrateDbIfNeeded } from "@/lib/db";
 import { seedIfEmpty, seedWeightsIfEmpty } from "@/lib/seed";
+import { isSupabaseConfigured } from "@/lib/supabase";
 
 async function initDb(db: SQLiteDatabase) {
   await migrateDbIfNeeded(db);
-  await seedIfEmpty(db);
-  await seedWeightsIfEmpty(db);
+  // Demo seed data is for local-only/dev mode. With Supabase auth on, each
+  // account's data comes from the cloud — seeding would leak across accounts.
+  if (!isSupabaseConfigured) {
+    await seedIfEmpty(db);
+    await seedWeightsIfEmpty(db);
+  }
 }
 
 /** Redirects between the auth flow and the main app based on session. */

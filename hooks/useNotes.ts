@@ -1,7 +1,8 @@
 import { useFocusEffect } from "expo-router";
 import { useSQLiteContext } from "expo-sqlite";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
+import { onDataReset } from "@/lib/dataEvents";
 import {
   addNote,
   deleteNote,
@@ -49,6 +50,8 @@ export function useNotes() {
       reload();
     }, [reload]),
   );
+
+  useEffect(() => onDataReset(reload), [reload]);
 
   return { notes, add, update, remove, reload };
 }
