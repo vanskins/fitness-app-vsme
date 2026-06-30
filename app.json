@@ -1,0 +1,40 @@
+{
+  "expo": {
+    "name": "FitNotes",
+    "slug": "fitnotes",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "fitnotes",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "resizeMode": "contain",
+      "backgroundColor": "#1D9E75"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.fitnotes.app"
+    },
+    "android": {
+      "package": "com.fitnotes.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#1D9E75"
+      }
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-asset",
+      "expo-sqlite"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
