@@ -6,7 +6,6 @@
     "orientation": "portrait",
     "scheme": "fitnotes",
     "userInterfaceStyle": "light",
-    "newArchEnabled": true,
     "splash": {
       "resizeMode": "contain",
       "backgroundColor": "#1D9E75"
@@ -31,7 +30,8 @@
     "plugins": [
       "expo-router",
       "expo-asset",
-      "expo-sqlite"
+      "expo-sqlite",
+      "expo-font"
     ],
     "experiments": {
       "typedRoutes": true
