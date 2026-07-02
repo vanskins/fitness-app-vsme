@@ -3,6 +3,7 @@ package com.fitnotes.app
 import android.os.Build
 import android.os.Bundle
 
+import androidx.health.connect.client.PermissionController
 import com.facebook.react.ReactActivity
 import com.facebook.react.ReactActivityDelegate
 import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint.fabricEnabled
@@ -11,12 +12,27 @@ import com.facebook.react.defaults.DefaultReactActivityDelegate
 import expo.modules.ReactActivityDelegateWrapper
 
 class MainActivity : ReactActivity() {
+  private var healthPermissionCallback: ((Set<String>) -> Unit)? = null
+  private val healthPermissionLauncher =
+    registerForActivityResult(PermissionController.createRequestPermissionResultContract()) { grantedPermissions ->
+      healthPermissionCallback?.invoke(grantedPermissions)
+      healthPermissionCallback = null
+    }
+
   override fun onCreate(savedInstanceState: Bundle?) {
     // Set the theme to AppTheme BEFORE onCreate to support
     // coloring the background, status bar, and navigation bar.
     // This is required for expo-splash-screen.
     setTheme(R.style.AppTheme);
     super.onCreate(null)
+  }
+
+  fun requestHealthConnectPermissions(
+    permissions: Set<String>,
+    callback: (Set<String>) -> Unit
+  ) {
+    healthPermissionCallback = callback
+    healthPermissionLauncher.launch(permissions)
   }
 
   /**

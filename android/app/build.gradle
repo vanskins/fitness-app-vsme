@@ -90,7 +90,7 @@ android {
     namespace 'com.fitnotes.app'
     defaultConfig {
         applicationId 'com.fitnotes.app'
-        minSdkVersion rootProject.ext.minSdkVersion
+        minSdkVersion Math.max(rootProject.ext.minSdkVersion as Integer, 26)
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
         versionName "1.0.0"
@@ -155,6 +155,8 @@ android {
 dependencies {
     // The version of react-native is set by the React Native Gradle Plugin
     implementation("com.facebook.react:react-android")
+    implementation("androidx.health.connect:connect-client:1.1.0-alpha12")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
 
     def isGifEnabled = (findProperty('expo.gif.enabled') ?: "") == "true";
     def isWebpEnabled = (findProperty('expo.webp.enabled') ?: "") == "true";
