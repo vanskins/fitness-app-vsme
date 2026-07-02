@@ -12,7 +12,7 @@ import type { SQLiteDatabase } from "expo-sqlite";
  * for future destructive/data migrations.
  */
 export const DB_NAME = "fitnotes.db";
-const DB_VERSION = 4;
+const DB_VERSION = 5;
 
 /** Adds a column to a table only if it isn't already present (idempotent). */
 async function addColumnIfMissing(
@@ -146,6 +146,15 @@ export async function migrateDbIfNeeded(db: SQLiteDatabase): Promise<void> {
         logged_in INTEGER NOT NULL DEFAULT 0,
         created_at TEXT NOT NULL,
         updated_at TEXT NOT NULL
+      );
+
+      CREATE TABLE IF NOT EXISTS health_preferences (
+        id TEXT PRIMARY KEY NOT NULL,
+        user_id TEXT NOT NULL,
+        dismissed INTEGER NOT NULL DEFAULT 0,
+        updated_at TEXT NOT NULL,
+        synced INTEGER NOT NULL DEFAULT 0,
+        UNIQUE (user_id)
       );
   `);
 
