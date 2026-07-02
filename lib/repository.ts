@@ -4,7 +4,12 @@ import { todayKey } from "@/lib/db";
 import { generateId, LOCAL_USER_ID } from "@/lib/id";
 import type { FoodLog, MealType } from "@/types/food";
 import type { DailyNote } from "@/types/note";
-import type { BodyWeight, CaloriePoint, WeekSummary } from "@/types/progress";
+import type {
+  BodyWeight,
+  CaloriePoint,
+  WeekSummary,
+  WorkoutPoint,
+} from "@/types/progress";
 import type { UserGoals } from "@/types/user";
 import type {
   ExerciseSet,
@@ -619,6 +624,46 @@ export async function getCalorieHistory(
   for (let i = days - 1; i >= 0; i--) {
     const date = todayKey(new Date(now - i * dayMs));
     points.push({ date, calories: byDate.get(date) ?? 0 });
+  }
+  return points;
+}
+
+/** Workout volume per day for the last `days` days, zero-filled. */
+export async function getWorkoutProgressHistory(
+  db: SQLiteDatabase,
+  days = 7,
+): Promise<WorkoutPoint[]> {
+  const rows = await db.getAllAsync<{
+    d: string;
+    workouts: number;
+    completed_sets: number;
+    volume: number;
+  }>(
+    `SELECT substr(ws.started_at, 1, 10) as d,
+       COUNT(DISTINCT ws.id) as workouts,
+       COUNT(CASE WHEN es.completed = 1 THEN 1 END) as completed_sets,
+       COALESCE(SUM(CASE WHEN es.completed = 1 THEN es.weight_kg * es.reps ELSE 0 END), 0) as volume
+     FROM workout_sessions ws
+     LEFT JOIN workout_exercises we ON we.session_id = ws.id
+     LEFT JOIN exercise_sets es ON es.exercise_id = we.id
+     WHERE ws.user_id = ? AND ws.finished_at IS NOT NULL
+     GROUP BY d`,
+    [LOCAL_USER_ID],
+  );
+  const byDate = new Map(rows.map((r) => [r.d, r]));
+
+  const dayMs = 24 * 60 * 60 * 1000;
+  const now = Date.now();
+  const points: WorkoutPoint[] = [];
+  for (let i = days - 1; i >= 0; i--) {
+    const date = todayKey(new Date(now - i * dayMs));
+    const row = byDate.get(date);
+    points.push({
+      date,
+      workouts: row?.workouts ?? 0,
+      completedSets: row?.completed_sets ?? 0,
+      volumeKg: row?.volume ?? 0,
+    });
   }
   return points;
 }

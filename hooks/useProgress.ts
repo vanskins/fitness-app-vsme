@@ -9,10 +9,17 @@ import {
   getCalorieHistory,
   getWeekSummary,
   getWeights,
+  getWorkoutProgressHistory,
 } from "@/lib/repository";
-import type { BodyWeight, CaloriePoint, WeekSummary } from "@/types/progress";
+import type {
+  BodyWeight,
+  CaloriePoint,
+  WeekSummary,
+  WorkoutPoint,
+} from "@/types/progress";
 
 const CALORIE_DAYS = 7;
+const WORKOUT_DAYS = 7;
 
 const EMPTY_SUMMARY: WeekSummary = {
   workouts: 0,
@@ -25,15 +32,18 @@ export function useProgress() {
   const db = useSQLiteContext();
   const [weights, setWeights] = useState<BodyWeight[]>([]);
   const [calories, setCalories] = useState<CaloriePoint[]>([]);
+  const [workouts, setWorkouts] = useState<WorkoutPoint[]>([]);
   const [summary, setSummary] = useState<WeekSummary>(EMPTY_SUMMARY);
 
   const reload = useCallback(async () => {
-    const [w, history] = await Promise.all([
+    const [w, history, workoutHistory] = await Promise.all([
       getWeights(db),
       getCalorieHistory(db, CALORIE_DAYS),
+      getWorkoutProgressHistory(db, WORKOUT_DAYS),
     ]);
     setWeights(w);
     setCalories(history);
+    setWorkouts(workoutHistory);
     setSummary(await getWeekSummary(db, history));
   }, [db]);
 
@@ -61,5 +71,13 @@ export function useProgress() {
 
   useEffect(() => onDataReset(reload), [reload]);
 
-  return { weights, calories, summary, addWeight, deleteWeight, reload };
+  return {
+    weights,
+    calories,
+    workouts,
+    summary,
+    addWeight,
+    deleteWeight,
+    reload,
+  };
 }

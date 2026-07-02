@@ -7,6 +7,7 @@ import { BarChart } from "@/components/ui/BarChart";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { LineChart } from "@/components/ui/LineChart";
+import { colors } from "@/constants/colors";
 import { useCalories } from "@/hooks/useCalories";
 import { useProgress } from "@/hooks/useProgress";
 
@@ -24,7 +25,7 @@ function weekdayLabel(dateKey: string): string {
 
 export default function ProgressScreen() {
   const insets = useSafeAreaInsets();
-  const { weights, calories, summary, addWeight } = useProgress();
+  const { weights, calories, workouts, summary, addWeight } = useProgress();
   const { summary: calorieSummary } = useCalories();
   const [weightFormOpen, setWeightFormOpen] = useState(false);
 
@@ -36,6 +37,13 @@ export default function ProgressScreen() {
     label: weekdayLabel(p.date),
     value: p.calories,
   }));
+  const workoutBarData = workouts.map((p) => ({
+    label: weekdayLabel(p.date),
+    value: p.volumeKg,
+  }));
+  const workoutTotal = workouts.reduce((sum, p) => sum + p.workouts, 0);
+  const completedSetTotal = workouts.reduce((sum, p) => sum + p.completedSets, 0);
+  const workoutVolumeTotal = workouts.reduce((sum, p) => sum + p.volumeKg, 0);
 
   return (
     <View className="flex-1 bg-background">
@@ -79,6 +87,46 @@ export default function ProgressScreen() {
             </Card>
           </View>
         </View>
+
+        {/* Workout progress */}
+        <Text className="mb-2 mt-6 text-lg font-medium text-ink">
+          Workout progress
+        </Text>
+        <Card>
+          <View className="flex-row items-start justify-between">
+            <View>
+              <Text className="text-sm text-muted">Last 7 days</Text>
+              <View className="mt-1 flex-row items-baseline">
+                <Text className="text-2xl font-medium text-ink">
+                  {Math.round(workoutVolumeTotal).toLocaleString()}
+                </Text>
+                <Text className="ml-1 text-sm text-muted">kg</Text>
+              </View>
+            </View>
+            <View className="items-end">
+              <Text className="text-sm font-medium text-ink">
+                {workoutTotal} {workoutTotal === 1 ? "workout" : "workouts"}
+              </Text>
+              <Text className="text-xs text-muted">
+                {completedSetTotal} completed sets
+              </Text>
+            </View>
+          </View>
+          {workoutBarData.some((d) => d.value > 0) ? (
+            <View className="mt-2">
+              <BarChart
+                data={workoutBarData}
+                width={CHART_W}
+                color={colors.accent.blue.icon}
+              />
+            </View>
+          ) : (
+            <Text className="py-6 text-center text-sm text-muted">
+              No finished workouts in the last 7 days. Complete a workout to
+              see your training volume.
+            </Text>
+          )}
+        </Card>
 
         {/* Weight trend */}
         <Text className="mb-2 mt-6 text-lg font-medium text-ink">

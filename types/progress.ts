@@ -10,6 +10,15 @@ export interface CaloriePoint {
   calories: number;
 }
 
+export interface WorkoutPoint {
+  /** YYYY-MM-DD */
+  date: string;
+  workouts: number;
+  completedSets: number;
+  /** Total volume (Σ weight × reps) of completed sets, in kg. */
+  volumeKg: number;
+}
+
 export interface WeekSummary {
   workouts: number;
   /** Total volume (Σ weight × reps) of completed sets this week, in kg. */
